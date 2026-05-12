@@ -72,6 +72,18 @@ final class TelegramGatewayClientTest extends TestCase
         ], json_decode((string) $history[0]['request']->getBody(), true));
     }
 
+    public function testItCanUseTokenProvidedForCurrentSite(): void
+    {
+        $history = [];
+        $client = $this->clientWithoutToken([
+            new Response(200, [], json_encode(['ok' => true, 'result' => ['can_send' => true]])),
+        ], $history);
+
+        $client->withToken('site-token')->checkSendAbility('+995555123456');
+
+        $this->assertSame('Bearer site-token', $history[0]['request']->getHeaderLine('Authorization'));
+    }
+
     public function testItThrowsSafeExceptionForTelegramApiErrors(): void
     {
         $client = $this->client([
@@ -140,6 +152,22 @@ final class TelegramGatewayClientTest extends TestCase
             'test-token',
             new Client(['handler' => $stack]),
             'https://gatewayapi.telegram.org'
+        );
+    }
+
+    /**
+     * @param array<int, Response> $responses
+     * @param array<int, array<string, mixed>> $history
+     */
+    private function clientWithoutToken(array $responses, array &$history = []): TelegramGatewayClient
+    {
+        $mock = new MockHandler($responses);
+        $stack = HandlerStack::create($mock);
+        $stack->push(Middleware::history($history));
+
+        return new TelegramGatewayClient(
+            httpClient: new Client(['handler' => $stack]),
+            baseUrl: 'https://gatewayapi.telegram.org'
         );
     }
 }

@@ -56,6 +56,19 @@ if (TelegramGatewayClient::isCodeValid($check)) {
 }
 ```
 
+If one backend serves several sites with separate Telegram Gateway accounts, keep
+the shared client tokenless and attach the site token only for the current call:
+
+```php
+$gateway = new TelegramGatewayClient(
+    baseUrl: getenv('TELEGRAM_GATEWAY_BASE_URL') ?: TelegramGatewayClient::DEFAULT_BASE_URL,
+);
+
+$send = $gateway
+    ->withToken($siteTelegramGatewayToken)
+    ->sendVerificationMessage('+995555123456');
+```
+
 ## Callback Signature
 
 ```php

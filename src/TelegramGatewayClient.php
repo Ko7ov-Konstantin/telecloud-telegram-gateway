@@ -15,16 +15,20 @@ final class TelegramGatewayClient
     private ClientInterface $httpClient;
 
     public function __construct(
-        private readonly string $token,
+        private string $token = '',
         ?ClientInterface $httpClient = null,
         private readonly string $baseUrl = self::DEFAULT_BASE_URL,
         private readonly float $timeout = 12.0,
     ) {
-        if (trim($token) === '') {
-            throw new InvalidArgumentException('Telegram Gateway token is required.');
-        }
-
         $this->httpClient = $httpClient ?: new Client();
+    }
+
+    public function withToken(string $token): self
+    {
+        $clone = clone $this;
+        $clone->token = self::token($token);
+
+        return $clone;
     }
 
     /**
@@ -170,7 +174,7 @@ final class TelegramGatewayClient
                 'http_errors' => false,
                 'timeout' => $this->timeout,
                 'headers' => [
-                    'Authorization' => 'Bearer ' . $this->token,
+                    'Authorization' => 'Bearer ' . self::token($this->token),
                     'Accept' => 'application/json',
                     'Content-Type' => 'application/json',
                 ],
@@ -249,6 +253,17 @@ final class TelegramGatewayClient
         }
 
         return $value;
+    }
+
+    private static function token(string $token): string
+    {
+        $token = trim($token);
+
+        if ($token === '') {
+            throw new InvalidArgumentException('Telegram Gateway token is required.');
+        }
+
+        return $token;
     }
 
     /**
